@@ -1,0 +1,965 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        html, body {
+            height:100%;
+            overflow:hidden;
+        }
+
+        body {
+            display:flex;
+            flex-direction:column;
+            font-family:'Poppins', sans-serif;
+            background:linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%);
+            color:white;
+        }
+
+        /* Header */
+        #header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:10px 25px;
+            background:rgba(13, 33, 55, 0.8);
+            backdrop-filter:blur(10px);
+            border-bottom:1px solid rgba(255,255,255,0.1);
+        }
+
+        #header .title {
+            font-size:2em;
+            font-weight:600;
+            color:#f39c12;
+            letter-spacing:3px;
+            text-shadow:0 2px 10px rgba(243, 156, 18, 0.3);
+        }
+
+        #header .clock {
+            font-size:2.5em;
+            font-weight:300;
+            color:#4ecdc4;
+            font-variant-numeric:tabular-nums;
+            text-shadow:0 2px 10px rgba(78, 205, 196, 0.3);
+        }
+
+        /* Main container */
+        #container {
+            flex:1;
+            display:flex;
+            overflow:hidden;
+            padding:10px;
+            gap:10px;
+        }
+
+        /* Left sidebar - Prayer times */
+        #sidebar {
+            width:340px;
+            min-width:340px;
+            background:rgba(13, 33, 55, 0.6);
+            backdrop-filter:blur(20px);
+            border-radius:16px;
+            display:flex;
+            flex-direction:column;
+            padding:20px;
+            justify-content:center;
+            border:1px solid rgba(255,255,255,0.1);
+            box-shadow:0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .location {
+            font-size:1.8em;
+            font-weight:600;
+            color:#f39c12;
+            text-align:center;
+            margin-bottom:5px;
+        }
+
+        .date {
+            text-align:center;
+            margin-bottom:10px;
+            font-size:0.95em;
+            font-weight:300;
+        }
+
+        .date-islamic {
+            color:#4ecdc4;
+            font-weight:500;
+            margin-bottom:5px;
+        }
+
+        .prayer-times {
+            display:flex;
+            flex-direction:column;
+            gap:5px;
+        }
+
+        .prayer {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:8px 15px;
+            background:rgba(255,255,255,0.05);
+            border-radius:8px;
+            transition:all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border:1px solid transparent;
+        }
+
+        .prayer:hover {
+            background:rgba(255,255,255,0.08);
+            transform:translateX(5px);
+        }
+
+        .prayer.active {
+            background:rgba(78,205,196,0.2);
+            border:1px solid rgba(78,205,196,0.4);
+            box-shadow:0 0 20px rgba(78,205,196,0.2);
+        }
+
+        .prayer-name {
+            font-size:1.2em;
+            font-weight:400;
+            opacity:0.9;
+        }
+
+        .prayer-time {
+            font-size:1.6em;
+            font-weight:600;
+        }
+
+        /* Main content area */
+        #main {
+            flex:1;
+            display:flex;
+            flex-direction:column;
+            overflow:hidden;
+            min-width:0;
+            gap:20px;
+        }
+
+        /* Message display area */
+        #message-area {
+            flex:1;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            padding:30px 40px;
+            text-align:center;
+            background:rgba(13, 33, 55, 0.4);
+            backdrop-filter:blur(10px);
+            border-radius:16px;
+            border:1px solid rgba(255,255,255,0.1);
+            box-shadow:0 8px 32px rgba(0,0,0,0.2);
+        }
+
+        #message {
+            font-size:3.5vw;
+            font-weight:500;
+            line-height:1.4;
+            opacity:1;
+            transition:opacity 0.5s ease, font-size 0.3s ease;
+            width:100%;
+            text-align:center;
+            word-wrap:break-word;
+            white-space:normal;
+        }
+
+        #message.fade-out {
+            opacity:0;
+        }
+
+        /* Bottom ticker for Obavještenja */
+        #bottom {
+            height:60px;
+            min-height:60px;
+            background:linear-gradient(90deg, #1d7d1d 0%, #2d9d2d 100%);
+            display:none;
+            align-items:center;
+            overflow:hidden;
+            border-radius:12px;
+            box-shadow:0 4px 20px rgba(29, 125, 29, 0.3);
+        }
+
+        #bottom.has-announcements {
+            display:flex;
+        }
+
+        .ticker {
+            display:flex;
+            white-space:nowrap;
+            animation:scroll-left 20s linear infinite;
+        }
+
+        .ticker-item {
+            padding:0 20px;
+            font-size:1.5em;
+            font-weight:500;
+        }
+
+        .ticker-item::after {
+            content:" ✦ ";
+            margin:0 25px;
+            opacity:0.6;
+        }
+
+        @keyframes scroll-left {
+            0%   { transform:translateX(0); }
+            100% { transform:translateX(-50%); }
+        }
+
+        /* Test Panel */
+        #test-panel {
+            position:fixed;
+            top:10px;
+            right:10px;
+            background:rgba(0,0,0,0.9);
+            padding:15px;
+            border-radius:10px;
+            z-index:2000;
+            font-size:12px;
+            max-width:200px;
+        }
+        #test-panel h3 { margin-bottom:10px; color:#f39c12; }
+        #test-panel div { margin:5px 0; }
+        #test-panel button {
+            margin:2px;
+            padding:5px 8px;
+            cursor:pointer;
+            border:none;
+            border-radius:5px;
+            font-size:11px;
+        }
+        #test-panel .prayer-btn { background:#4ecdc4; }
+        #test-panel .mode-btn { background:#f39c12; }
+        #test-panel .exit-btn { background:#e74c3c; color:white; }
+        #test-panel .section { margin-top:10px; color:#aaa; }
+
+        /* Prayer Mode - Fullscreen */
+        #prayer-mode {
+            display:none;
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:linear-gradient(135deg, #0a1628 0%, #1a2a4a 100%);
+            z-index:1000;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            text-align:center;
+            padding:40px;
+        }
+
+        #prayer-mode.active {
+            display:flex;
+        }
+
+        #prayer-mode .prayer-mode-header {
+            font-size:2.2em;
+            font-weight:600;
+            color:#f39c12;
+            letter-spacing:3px;
+            margin-bottom:20px;
+            text-shadow:0 2px 10px rgba(243, 156, 18, 0.3);
+        }
+
+        #prayer-mode .prayer-mode-clock {
+            font-size:3em;
+            font-weight:300;
+            color:#4ecdc4;
+            margin-bottom:30px;
+            font-variant-numeric:tabular-nums;
+        }
+
+        #prayer-mode .prayer-mode-title {
+            font-size:2.5vw;
+            color:#f39c12;
+            margin-bottom:10px;
+            font-weight:500;
+        }
+
+        #prayer-mode .prayer-mode-date {
+            text-align:center;
+            margin-bottom:40px;
+            font-size:1.5vw;
+            font-weight:300;
+        }
+
+        #prayer-mode .prayer-mode-date .islamic {
+            color:#4ecdc4;
+            font-weight:500;
+            margin-bottom:5px;
+        }
+
+        #prayer-mode .prayer-mode-date .gregorian {
+            opacity:0.8;
+        }
+
+        #prayer-mode .prayer-mode-times {
+            display:flex;
+            gap:25px;
+            flex-wrap:wrap;
+            justify-content:center;
+        }
+
+        #prayer-mode .prayer-mode-item {
+            text-align:center;
+            padding:25px 35px;
+            background:rgba(255,255,255,0.05);
+            border-radius:16px;
+            transition:all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border:1px solid rgba(255,255,255,0.1);
+        }
+
+        #prayer-mode .prayer-mode-item.active {
+            background:rgba(78,205,196,0.2);
+            border:1px solid rgba(78,205,196,0.5);
+            box-shadow:0 0 40px rgba(78,205,196,0.3);
+            transform:scale(1.08);
+        }
+
+        #prayer-mode .prayer-mode-item .name {
+            font-size:2vw;
+            font-weight:400;
+            opacity:0.8;
+            margin-bottom:8px;
+        }
+
+        #prayer-mode .prayer-mode-item .time {
+            font-size:3.5vw;
+            font-weight:600;
+        }
+
+        #prayer-mode .prayer-mode-item.active .name {
+            color:#4ecdc4;
+            opacity:1;
+        }
+
+        #prayer-mode .prayer-status {
+            font-size:2vw;
+            margin-top:40px;
+            opacity:0.6;
+            font-weight:300;
+        }
+
+        /* Hide normal content during prayer mode */
+        body.prayer-active #container {
+            display:none;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Test Panel - HIDDEN
+<div id="test-panel">
+    <h3>Test Panel</h3>
+    <div>Set Active Prayer:</div>
+    <button class="prayer-btn" onclick="testSetActivePrayer(0)">Zora</button>
+    <button class="prayer-btn" onclick="testSetActivePrayer(1)">Izlazak</button>
+    <button class="prayer-btn" onclick="testSetActivePrayer(2)">Podne</button>
+    <button class="prayer-btn" onclick="testSetActivePrayer(3)">Ikindija</button>
+    <button class="prayer-btn" onclick="testSetActivePrayer(4)">Akšam</button>
+    <button class="prayer-btn" onclick="testSetActivePrayer(5)">Jacija</button>
+    <div class="section">Prayer Mode:</div>
+    <button class="mode-btn" onclick="testEnterPrayerMode(0)">30s before Zora</button>
+    <button class="mode-btn" onclick="testEnterPrayerMode(2)">30s before Podne</button>
+    <button class="mode-btn" onclick="testEnterPrayerMode(4)">30s before Akšam</button>
+    <div class="section">Exit:</div>
+    <button class="exit-btn" onclick="exitPrayerMode()">Exit Prayer Mode</button>
+    <div class="section">Messages:</div>
+    <button class="exit-btn" onclick="rotateMessage()">Next Message</button>
+    <button class="exit-btn" onclick="fetchMessages()">Force Refresh CSV</button>
+    <div class="section">Announcements:</div>
+    <button class="mode-btn" onclick="testAddAnnouncement()">Add Test</button>
+    <button class="exit-btn" onclick="testClearAnnouncements()">Clear</button>
+</div>
+-->
+
+<!-- Prayer Mode Fullscreen -->
+<div id="prayer-mode">
+    <div class="prayer-mode-header">ARSLANAGINA VIKALJSKA DŽAMIJA</div>
+    <div class="prayer-mode-clock" id="prayer-mode-clock"></div>
+    <div class="prayer-mode-title" id="prayer-mode-title">Tuzla</div>
+    <div class="prayer-mode-date">
+        <div class="islamic" id="prayer-mode-islamic"></div>
+        <div class="gregorian" id="prayer-mode-gregorian"></div>
+    </div>
+    <div class="prayer-mode-times" id="prayer-mode-times"></div>
+    <div class="prayer-status" id="prayer-mode-status"></div>
+</div>
+
+<!-- Header -->
+<div id="header">
+    <div class="title">ARSLANAGINA VIKALJSKA DŽAMIJA</div>
+    <div class="clock" id="clock"></div>
+</div>
+
+<!-- Main container -->
+<div id="container">
+    <!-- Left sidebar with prayer times -->
+    <div id="sidebar">
+        <div class="location" id="location">Tuzla</div>
+        <div class="date">
+            <div class="date-islamic" id="date-islamic"></div>
+            <div id="date-gregorian"></div>
+        </div>
+        <div class="prayer-times" id="prayer-times"></div>
+    </div>
+
+    <!-- Main content -->
+    <div id="main">
+        <div id="message-area">
+            <div id="message"></div>
+        </div>
+        <div id="bottom">
+            <div class="ticker" id="ticker"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================
+    // CLOCK
+    // ============================================
+    function updateClock() {
+        const now = new Date();
+        const time = now.toLocaleTimeString('hr-HR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        });
+        document.getElementById('clock').textContent = time;
+
+        // Also update prayer mode clock if visible
+        const prayerClock = document.getElementById('prayer-mode-clock');
+        if (prayerClock) {
+            prayerClock.textContent = time;
+        }
+    }
+
+    // Update clock every second
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // ============================================
+    // CONFIGURATION
+    // ============================================
+
+    // Vaktija API for Tuzla (ID: 93)
+    const VAKTIJA_API = 'https://api.vaktija.ba/vaktija/v1/93';
+    const CORS_PROXY = 'https://corsproxy.io/?';
+
+    // Google Sheets CSV URL
+    const GOOGLE_SHEET_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRpcuOleNQR-WnFPu49-Ha2YQj8ZrVYVYEPrWU-pBwz7nsFmkXDgLK_fGiE7Emn0Wec7yz552GO_Wzw/pub?output=csv';
+
+    // Intervals
+    const SHEET_REFRESH_MS = 300000;        // 5 min - fetch new messages from sheet
+    const MESSAGE_ROTATE_MS = 300000;       // 5 min - rotate main message
+    const PRAYER_CHECK_MS = 60000;          // 60 sec - check for prayer time change
+    const PRAYER_MODE_CHECK_MS = 5000;      // 5 sec - check for prayer mode trigger
+
+    // Prayer mode settings
+    const PRAYER_MODE_BEFORE_SEC = 30;      // 30 sec before prayer time
+    const PRAYER_MODE_DURATION_MS = 1800000; // 30 min prayer mode duration
+
+    // Prayer names in Bosnian
+    const PRAYER_NAMES = ['Zora', 'Izlazak', 'Podne', 'Ikindija', 'Akšam', 'Jacija'];
+
+    // Check if currently in summer time (DST)
+    function isSummerTime() {
+        const now = new Date();
+        const jan = new Date(now.getFullYear(), 0, 1);
+        const jul = new Date(now.getFullYear(), 6, 1);
+        const stdOffset = Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+        return now.getTimezoneOffset() < stdOffset;
+    }
+
+    // Get fixed Podne time (12:00 winter, 13:00 summer)
+    function getFixedPodneTime() {
+        return isSummerTime() ? '13:00' : '12:00';
+    }
+
+    // Fallback vaktija data (approximate times for Tuzla)
+    const FALLBACK_VAKTIJA = {
+        lokacija: 'Tuzla',
+        datum: ['', new Date().toLocaleDateString('bs-BA', {weekday:'long', day:'numeric', month:'long', year:'numeric'})],
+        vakat: ['5:30', '7:00', '11:45', '14:30', '16:45', '18:15']
+    };
+
+
+    // State
+    let vaktijaData = null;
+    let messages = [];
+    let announcements = [];
+    let currentMessageIndex = 0;
+    let prayerModeActive = false;
+    let prayerModeTimeout = null;
+
+    // ============================================
+    // VAKTIJA API
+    // ============================================
+    function getCurrentPrayerIndex(vakat) {
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        for (let i = vakat.length - 1; i >= 0; i--) {
+            const [h, m] = vakat[i].split(':').map(Number);
+            if (currentMinutes >= h * 60 + m) {
+                return i;
+            }
+        }
+        // Before Zora - show Jacija as last active prayer
+        return 5;
+    }
+
+    function renderPrayerTimes() {
+        if (!vaktijaData) return;
+
+        const container = document.getElementById('prayer-times');
+        const activeIndex = getCurrentPrayerIndex(vaktijaData.vakat);
+
+        container.innerHTML = vaktijaData.vakat.map((time, i) => `
+            <div class="prayer ${i === activeIndex ? 'active' : ''}">
+                <div class="prayer-name">${PRAYER_NAMES[i]}</div>
+                <div class="prayer-time">${time}</div>
+            </div>
+        `).join('');
+    }
+
+    async function fetchVaktija() {
+        let data = null;
+
+        // Try 1: Direct API
+        try {
+            const response = await fetch(VAKTIJA_API);
+            if (response.ok) {
+                data = await response.json();
+                console.log('Vaktija loaded from direct API');
+            }
+        } catch (e) {
+            console.warn('Direct API failed, trying CORS proxy...', e.message);
+        }
+
+        // Try 2: CORS Proxy
+        if (!data) {
+            try {
+                const response = await fetch(CORS_PROXY + encodeURIComponent(VAKTIJA_API));
+                if (response.ok) {
+                    data = await response.json();
+                    console.log('Vaktija loaded via CORS proxy');
+                }
+            } catch (e) {
+                console.warn('CORS proxy failed, using fallback...', e.message);
+            }
+        }
+
+        // Try 3: Use fallback
+        if (!data) {
+            data = FALLBACK_VAKTIJA;
+            console.log('Using fallback vaktija times');
+        }
+
+        // Store and render
+        vaktijaData = data;
+
+        // Override Podne time (index 2) with fixed time
+        vaktijaData.vakat[2] = getFixedPodneTime();
+
+        document.getElementById('location').textContent = vaktijaData.lokacija;
+        document.getElementById('date-islamic').textContent = vaktijaData.datum[0];
+        document.getElementById('date-gregorian').textContent = vaktijaData.datum[1];
+
+        renderPrayerTimes();
+    }
+
+    // Check and update active prayer every minute
+    setInterval(renderPrayerTimes, PRAYER_CHECK_MS);
+
+    // Initial load
+    fetchVaktija();
+
+    // ============================================
+    // PRAYER MODE (fullscreen 30 sec before prayer)
+    // ============================================
+    function enterPrayerMode(prayerIndex) {
+        if (prayerModeActive) return;
+
+        prayerModeActive = true;
+        document.body.classList.add('prayer-active');
+        document.getElementById('prayer-mode').classList.add('active');
+
+        // Set title and dates
+        document.getElementById('prayer-mode-title').textContent = vaktijaData.lokacija;
+        document.getElementById('prayer-mode-islamic').textContent = vaktijaData.datum[0];
+        document.getElementById('prayer-mode-gregorian').textContent = vaktijaData.datum[1];
+
+        // Render all prayer times with current one highlighted
+        const container = document.getElementById('prayer-mode-times');
+        container.innerHTML = vaktijaData.vakat.map((time, i) => `
+            <div class="prayer-mode-item ${i === prayerIndex ? 'active' : ''}">
+                <div class="name">${PRAYER_NAMES[i]}</div>
+                <div class="time">${time}</div>
+            </div>
+        `).join('');
+
+        document.getElementById('prayer-mode-status').textContent = 'Vrijeme namaza - ' + PRAYER_NAMES[prayerIndex];
+
+        console.log('Prayer mode activated for:', PRAYER_NAMES[prayerIndex]);
+
+        // Exit prayer mode after 30 minutes
+        prayerModeTimeout = setTimeout(exitPrayerMode, PRAYER_MODE_DURATION_MS);
+    }
+
+    function exitPrayerMode() {
+        prayerModeActive = false;
+        document.body.classList.remove('prayer-active');
+        document.getElementById('prayer-mode').classList.remove('active');
+
+        if (prayerModeTimeout) {
+            clearTimeout(prayerModeTimeout);
+            prayerModeTimeout = null;
+        }
+
+        console.log('Prayer mode deactivated');
+    }
+
+    function checkPrayerMode() {
+        if (!vaktijaData || prayerModeActive) return;
+
+        const now = new Date();
+        const currentSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+
+        for (let i = 0; i < vaktijaData.vakat.length; i++) {
+            const [h, m] = vaktijaData.vakat[i].split(':').map(Number);
+            const prayerSeconds = h * 3600 + m * 60;
+
+            // Check if we're within 30 seconds before prayer time
+            const diff = prayerSeconds - currentSeconds;
+            if (diff >= 0 && diff <= PRAYER_MODE_BEFORE_SEC) {
+                enterPrayerMode(i);
+                break;
+            }
+        }
+    }
+
+    // Check for prayer mode every 5 seconds
+    setInterval(checkPrayerMode, PRAYER_MODE_CHECK_MS);
+
+    // ============================================
+    // MAIN MESSAGE DISPLAY (rotates every 5 min)
+    // ============================================
+    function adjustFontSize(el, text) {
+        const length = text.length;
+
+        // Adjust font size based on character count
+        let fontSize;
+        if (length > 600) {
+            fontSize = '1.3vw';
+        } else if (length > 450) {
+            fontSize = '1.6vw';
+        } else if (length > 300) {
+            fontSize = '1.9vw';
+        } else if (length > 200) {
+            fontSize = '2.2vw';
+        } else if (length > 150) {
+            fontSize = '2.5vw';
+        } else if (length > 100) {
+            fontSize = '2.8vw';
+        } else if (length > 60) {
+            fontSize = '3.2vw';
+        } else if (length > 30) {
+            fontSize = '3.8vw';
+        } else {
+            fontSize = '4.5vw';
+        }
+
+        el.style.fontSize = fontSize;
+    }
+
+    function showMessage(text) {
+        const el = document.getElementById('message');
+        el.classList.add('fade-out');
+
+        setTimeout(() => {
+            el.textContent = text;
+            adjustFontSize(el, text);
+            el.classList.remove('fade-out');
+        }, 500);
+    }
+
+    function rotateMessage() {
+        if (messages.length === 0) {
+            document.getElementById('message').textContent = '';
+            return;
+        }
+
+        showMessage(messages[currentMessageIndex]);
+        currentMessageIndex = (currentMessageIndex + 1) % messages.length;
+    }
+
+    // Rotate message every 5 minutes
+    setInterval(rotateMessage, MESSAGE_ROTATE_MS);
+
+    // ============================================
+    // GOOGLE SHEETS SYNC
+    // ============================================
+    // Parse CSV into 2D array (handles quoted fields with newlines)
+    function parseCSV(csv) {
+        const rows = [];
+        let currentRow = [];
+        let currentCell = '';
+        let inQuotes = false;
+
+        for (let i = 0; i < csv.length; i++) {
+            const char = csv[i];
+
+            if (char === '"') {
+                if (inQuotes && csv[i + 1] === '"') {
+                    currentCell += '"';
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                currentRow.push(currentCell.trim());
+                currentCell = '';
+            } else if ((char === '\n' || (char === '\r' && csv[i + 1] !== '\n')) && !inQuotes) {
+                currentRow.push(currentCell.trim());
+                if (currentRow.some(cell => cell.length > 0)) {
+                    rows.push(currentRow);
+                }
+                currentRow = [];
+                currentCell = '';
+            } else if (char === '\r' && !inQuotes) {
+                // Skip \r if followed by \n
+            } else {
+                currentCell += char;
+            }
+        }
+
+        // Last cell/row
+        currentRow.push(currentCell.trim());
+        if (currentRow.some(cell => cell.length > 0)) {
+            rows.push(currentRow);
+        }
+
+        return rows;
+    }
+
+    // Get today's column (Monday=0, Sunday=6)
+    function getTodayColumn() {
+        const day = new Date().getDay(); // Sunday=0, Monday=1, etc.
+        return (day + 6) % 7; // Convert to Monday=0, Sunday=6
+    }
+
+    // Extract messages for today's column
+    function getMessagesForToday(csvData) {
+        const column = getTodayColumn();
+        const todayMessages = [];
+
+        // Skip first row (header)
+        for (let i = 1; i < csvData.length; i++) {
+            const row = csvData[i];
+
+            // Add today's column message
+            if (row[column] && row[column].trim().length > 0) {
+                todayMessages.push(row[column].trim());
+            }
+        }
+
+        return todayMessages;
+    }
+
+    // Extract announcements from column H (index 7)
+    function getAnnouncements(csvData) {
+        const announcementsList = [];
+
+        // Skip first row (header)
+        for (let i = 1; i < csvData.length; i++) {
+            const row = csvData[i];
+
+            // Column H = index 7
+            if (row[7] && row[7].trim().length > 0) {
+                announcementsList.push(row[7].trim());
+            }
+        }
+
+        return announcementsList;
+    }
+
+    // Update ticker with announcements
+    function updateTicker() {
+        const bottom = document.getElementById('bottom');
+        const ticker = document.getElementById('ticker');
+
+        if (announcements.length === 0) {
+            bottom.classList.remove('has-announcements');
+            ticker.innerHTML = '';
+            return;
+        }
+
+        bottom.classList.add('has-announcements');
+
+        const html = announcements.map(msg =>
+            `<span class="ticker-item">${msg}</span>`
+        ).join('');
+
+        ticker.innerHTML = html + html; // Duplicate for seamless loop
+
+        // Adjust speed based on content length
+        const totalLength = announcements.join('').length;
+        const duration = Math.max(15, totalLength * 0.3);
+        ticker.style.animationDuration = duration + 's';
+    }
+
+    async function fetchMessages() {
+        const cacheBuster = '&t=' + Date.now() + '&r=' + Math.random();
+        const directUrl = GOOGLE_SHEET_CSV + cacheBuster;
+        const proxyUrl = CORS_PROXY + encodeURIComponent(GOOGLE_SHEET_CSV) + cacheBuster;
+
+        let csv = null;
+
+        // Try 1: Direct fetch
+        try {
+            const response = await fetch(directUrl, {
+                cache: 'no-store'
+            });
+            if (response.ok) {
+                csv = await response.text();
+                console.log('CSV loaded directly');
+            }
+        } catch (e) {
+            console.warn('Direct CSV fetch failed:', e.message);
+        }
+
+        // Try 2: CORS proxy
+        if (!csv) {
+            try {
+                const response = await fetch(proxyUrl, {
+                    cache: 'no-store'
+                });
+                if (response.ok) {
+                    csv = await response.text();
+                    console.log('CSV loaded via CORS proxy');
+                }
+            } catch (e) {
+                console.warn('CORS proxy CSV fetch failed:', e.message);
+            }
+        }
+
+        if (!csv) {
+            console.error('All CSV fetch attempts failed');
+            return;
+        }
+
+        const csvData = parseCSV(csv);
+        messages = getMessagesForToday(csvData);
+
+        // Get announcements from column H
+        announcements = getAnnouncements(csvData);
+        updateTicker();
+
+        console.log('Today is column', getTodayColumn(), '- loaded', messages.length, 'messages');
+        console.log('Announcements loaded:', announcements.length);
+        console.log('CSV rows parsed:', csvData.length);
+
+        // Show first message if none shown yet
+        if (document.getElementById('message').textContent === '') {
+            currentMessageIndex = 0;
+            rotateMessage();
+        }
+    }
+
+    // Fetch messages periodically
+    setInterval(fetchMessages, SHEET_REFRESH_MS);
+    fetchMessages();
+
+    // ============================================
+    // FULL PAGE RELOAD AT MIDNIGHT
+    // ============================================
+    function scheduleMidnightReload() {
+        const now = new Date();
+        const midnight = new Date(now);
+        midnight.setDate(midnight.getDate() + 1);
+        midnight.setHours(0, 1, 0, 0);
+
+        setTimeout(() => location.reload(), midnight - now);
+        console.log('Page reload scheduled for:', midnight.toLocaleString());
+    }
+
+    scheduleMidnightReload();
+
+    // ============================================
+    // AUTO-RELOAD ON CODE CHANGES
+    // ============================================
+    const CODE_CHECK_MS = 60000;
+    let lastETag = null;
+
+    async function checkForUpdates() {
+        try {
+            const response = await fetch(location.href, {
+                method: 'HEAD',
+                cache: 'no-store'
+            });
+
+            const etag = response.headers.get('etag') || response.headers.get('last-modified');
+
+            if (lastETag === null) {
+                lastETag = etag;
+            } else if (etag && etag !== lastETag) {
+                console.log('Code update detected, reloading...');
+                location.reload();
+            }
+        } catch (error) {
+            console.error('Update check failed:', error);
+        }
+    }
+
+    setInterval(checkForUpdates, CODE_CHECK_MS);
+    checkForUpdates();
+
+    // TEST FUNCTIONS (global scope for onclick handlers)
+    window.testSetActivePrayer = function(index) {
+        if (!vaktijaData) return;
+        const container = document.getElementById('prayer-times');
+        container.innerHTML = vaktijaData.vakat.map((time, i) => `
+            <div class="prayer ${i === index ? 'active' : ''}">
+                <div class="prayer-name">${PRAYER_NAMES[i]}</div>
+                <div class="prayer-time">${time}</div>
+            </div>
+        `).join('');
+    };
+
+    window.testEnterPrayerMode = function(index) {
+        if (!vaktijaData) return;
+        prayerModeActive = false;
+        enterPrayerMode(index);
+    };
+
+    window.exitPrayerMode = exitPrayerMode;
+    window.rotateMessage = rotateMessage;
+    window.fetchMessages = fetchMessages;
+
+    window.testAddAnnouncement = function() {
+        announcements.push('Test obavještenje ' + (announcements.length + 1));
+        updateTicker();
+    };
+
+    window.testClearAnnouncements = function() {
+        announcements = [];
+        updateTicker();
+    };
+</script>
+
+</body>
+</html>
